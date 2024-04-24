@@ -1,0 +1,1022 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load static %} 
+
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="{% static 'js/plotly-latest.min.js'%}"></script>
+    <script src="{% static 'js/popper.min.js'%}"></script>
+    <script src="{% static 'js/jquery.min.js'%}"></script>
+    <script src="{% static 'js/bootstrap.min.js'%}"></script>
+    <script src="{% static 'js/popper.min.js'%}"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts-3d.js"></script>
+     <script src="{% static 'js/jquery.min.js'%}"></script>
+    <script src="{% static 'js/highcharts.js'%}"></script>
+    <script src="{% static 'js/highcharts-3d.js'%}"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    
+    
+    <style>
+        #table2,
+        th,
+        td {
+            border: 0px solid black;
+            border-collapse: collapse;
+        }
+
+        #table2 {
+            width: 800px;
+        }
+
+        th,
+        td {
+            padding: 2px;
+            text-align: center;
+        }
+
+        tr:nth-child(even) {
+            background-color: burlywood;
+        }
+
+        #table1,
+        th,
+        td {
+            border: 0px;
+            border-collapse: collapse;
+        }
+
+        #table1 {
+            width: 800px;
+        }
+
+        th,
+        td {
+            padding: 2px;
+            text-align: center;
+        }
+
+        #myInput {
+            box-sizing: border-box;
+            background-image: url('searchicon.png');
+            background-position: 14px 12px;
+            background-repeat: no-repeat;
+            font-size: 16px;
+            padding: 14px 20px 12px 45px;
+            border: none;
+            border-bottom: 1px solid #ddd;
+        }
+
+        #myInput:focus {
+            outline: 3px solid #ddd;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f6f6f6;
+            min-width: 230px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            z-index: 1;
+        }
+
+        .dropdown-content option {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown option:hover {
+            background-color: #ddd;
+        }
+
+        .show {
+            display: block;
+        }
+
+        .dropbtn {
+            background-color: white;
+            color: black;
+            padding: 1px;
+            font-size: 16px;
+            border: 1px;
+            border-color: black;
+            cursor: pointer;
+        }
+
+        .dropbtn:hover,
+        .dropbtn:focus {
+            background-color: white;
+            border-color: black;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropbtn:disabled {
+            color: #6d6d6d;
+        }
+    </style>
+</head>
+
+<body>
+    
+    <center>
+        <br>
+        <h2>Failure Analysis </h2>
+        <br>
+        <table id="table1">
+            <thead>
+                <tr>
+                    <th>MACHINE TYPE</th>
+                    <th id="area1">MAINTENANCE AREA</th>
+                    <th id="cri1">CRITERIA</th>
+                    <th id="sub1" style="display: none;">SUB SYSTEM</th>
+                    <th id="per1">PERIOD RANGE</th>
+                    <th id="mw_no1">MWNO</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <select name="type" id="type" onchange="mac_type(value)" required>
+                            <option value="All Machines" selected>All Machines</option>
+                            <option value="C">Critical Machines</option>
+                            <option value="G">General Machines</option>
+                            <option value="MW">MWNO</option>
+                        </select>
+                    </td>
+                    <td id="area2">
+                        <select name="area" id="area" required>
+                            <option value="All area" selected>All area</option>
+                            <option value="MA1">MA1</option>
+                            <option value="MA2">MA2</option>
+                            <option value="MA3">MA3</option>
+                            <option value="CTS">CTS</option>
+
+                        </select>
+                    </td>
+                    <td id="cri2">
+                        <select name="criteria" id="criteria" onchange="sub_syst(value)">
+                            <option value="System wise" selected>System wise</option>
+                            <option value="Period wise">Period wise</option>
+                            <option value="Sub system wise">Sub system wise</option>
+
+                        </select>
+                    </td>
+                    <td id="sub2" style="display: none;">
+                        <select name="sub_s" id="sub_s">
+                            {% for system in sys %}
+                            <option value="{{system}}">{{system}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td id="per2">
+                        <select name="p_range" id="p_range">
+                            <option value="Year 2021-22">2021-22</option>
+                            <option value="Year 2020-21">2020-21</option>
+                            <option value="Year 2019-20">2019-20</option>
+                            <option value="Year 2020-21 to 2021-22" id="y1">2020-21 to 2021-22</option>
+                            <option value="Year 2019-20 to 2020-21" id="y2">2019-20 to 2020-21</option>
+
+                        </select>
+                    </td>
+                    <td id="mw_no2">
+                        <div class="dropdown" id="drop_d">
+                            <button type="button" onclick="myFunction()" class="dropbtn" id="MWNO"></button>
+                            <div id="myDropdown" class="dropdown-content">
+                                <input type="text" placeholder="Search.." id="myInput" onkeyup="filterFunction()">
+                                {% for x in mwno %}
+                                <option value="{{x}}">{{x}}</option>
+
+                                {% endfor %}
+
+                            </div>
+                        </div>
+
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <br>
+        <input type="button" id="show" class="btn btn-success" onclick="func()" value="Show">
+    </center>
+    
+    <!-- <center><b>
+            <h2 id="title">
+
+            </h2>
+        </b>
+    </center> -->
+    <br>
+    <div class="container">
+        
+        <ul class="nav nav-tabs nav-justified" role="tablist" id="nav_bar">
+
+        </ul>
+        <div class="tab-content">
+            <div id="graph" class="container tab-pane active" style="width: 1000px; height: 450px; margin:0px auto;">
+                <br>
+            </div>
+            <div id="graph2" class="container tab-pane fade" style="width: 800px; height: 400px; margin:0px auto;"><br>
+            </div>
+
+        </div>
+    </div>
+    <center>
+        <!-- <table class="table table-striped " style="width: 800px;" id="table2">
+            <thead>
+                <tr>
+                    <th>FAILURE TYPE</th>
+                    <th>NUMBER OF FAILURE</th>
+                    <th>CUMULATIVE</th>
+                    <th>CUMULATIVE %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in data%}
+                <tr>
+                    {%for j in i%}
+                    <td>
+                        <center>{{j}}</center>
+                    </td>
+                    {%endfor%}
+                </tr>
+                {%endfor%}
+                <tr>
+                    <td><b>Total failure:</b></td>
+                    <td colspan="3">
+                        <center>{{total}}</center>
+                    </td>
+                </tr>
+            </tbody>
+        </table> -->
+        <table class="table table-striped" style="width: 800px;" id="table3"></table>
+        <!-- <br><br>
+        {% autoescape off %}
+        <div id="chart">
+            {{ plot_div }}
+        </div>
+        {% endautoescape %} -->
+
+        <!-- <div id="graph" style="width: 1000px; height: 600px; margin:0px auto;display:none">
+
+        </div> -->
+        <br>
+    </center>
+</body>
+<script>
+    var mac_no = "";
+    $('#myDropdown option').on('click', function () {
+        mac_no = $(this).text();
+        document.getElementById("MWNO").value=mac_no;
+        document.getElementById("MWNO").click();
+        document.getElementById("MWNO").textContent=mac_no;
+        
+   
+        //func()
+    });
+
+    function myFunction() {
+        document.getElementById("myDropdown").classList.toggle("show");
+    }
+
+    function filterFunction() {
+        var input, filter, ul, li, a, i;
+        input = document.getElementById("myInput");
+        filter = input.value.toUpperCase();
+        div = document.getElementById("myDropdown");
+        a = div.getElementsByTagName("option");
+        for (i = 0; i < a.length; i++) {
+            txtValue = a[i].textContent || a[i].innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                a[i].style.display = "";
+            } else {
+                a[i].style.display = "none";
+            }
+        }
+    }
+
+
+    $(document).ready(function () {
+        document.getElementById('area').value = 'All area'
+        document.getElementById('type').value = 'All Machines'
+        document.getElementById('p_range').value = 'Year 2021-22'
+        document.getElementById('criteria').value = 'System wise'
+        document.getElementById('show').click()
+        document.getElementById('MWNO').disabled = true
+        $("#myDropdown *").prop('disabled', true);
+        /document.getElementById('myDropdown').style.display='none'/
+    });
+
+    function sub_syst(response) {
+        if (response == "Sub system wise") {
+            document.getElementById('sub1').style.display = 'block'
+            document.getElementById('sub2').style.display = 'block'
+            document.getElementById('per1').style.display = 'none'
+            document.getElementById('per2').style.display = 'none'
+
+        }
+        else {
+            document.getElementById('sub1').style.display = 'none'
+            document.getElementById('sub2').style.display = 'none'
+            document.getElementById('per1').style.display = 'block'
+            document.getElementById('per2').style.display = 'block'
+
+        }
+
+        if (response == "Period wise") {
+            document.getElementById('y1').style.display = 'none'
+            document.getElementById('y2').style.display = 'none'
+
+        }
+        if (response == "System wise") {
+            document.getElementById('y1').style.display = 'block'
+            document.getElementById('y2').style.display = 'block'
+
+        }
+    }
+
+    function mac_type(response) {
+        if (response == "MW") {
+            document.getElementById('area').disabled = true
+            document.getElementById('criteria').disabled = true
+            document.getElementById('p_range').disabled = true
+            document.getElementById('sub_s').disabled = true
+            document.getElementById('MWNO').disabled = false
+            $("#myDropdown *").prop('disabled', false);
+            document.getElementById("MWNO").textContent = "Select";
+
+            /*document.getElementById('area1').style.display='none'
+            document.getElementById('cri1').style.display='none'
+            document.getElementById('per1').style.display='none'
+            document.getElementById('sub1').style.display='none'
+            document.getElementById('mw_no1').style.display='block'
+            document.getElementById('area2').style.display='none'
+            document.getElementById('cri2').style.display='none'
+            document.getElementById('per2').style.display='none'
+            document.getElementById('sub2').style.display='none'
+            document.getElementById('mw_no2').style.display='block'*/
+
+
+        }
+        else {
+            document.getElementById('area').disabled = false
+            document.getElementById('criteria').disabled = false
+            document.getElementById('p_range').disabled = false
+            document.getElementById('sub_s').disabled = false
+            document.getElementById('MWNO').disabled = true
+            $("#myDropdown *").prop('disabled', true);
+            document.getElementById("MWNO").textContent = "";
+
+            /*document.getElementById('area1').style.display='block'
+            document.getElementById('cri1').style.display='block'
+            document.getElementById('per1').style.display='block'
+            document.getElementById('sub1').style.display='none'
+            document.getElementById('mw_no1').style.display='none'
+            document.getElementById('area2').style.display='block'
+            document.getElementById('cri2').style.display='block'
+            document.getElementById('per2').style.display='block'
+            document.getElementById('sub2').style.display='none'
+            document.getElementById('mw_no2').style.display='none'*/
+
+            /document.getElementById('myDropdown').style.display='block'/
+
+        }
+
+
+    }
+</script>
+
+<script>
+    function func() {
+        var type = document.getElementById("type").value;
+        var criteria = document.getElementById("criteria").value;
+        if (criteria == 'System wise' || type == "MW") {
+            var nav = '<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#graph">Pareto</a>'
+                + '</li><li class="nav-item"><a class="nav-link" data-toggle="tab" href="#graph2">Pie</a>'
+                + '</li>'
+            document.getElementById("nav_bar").innerHTML = nav;
+        }
+        else {
+            var nav = '<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#graph"></a>'
+                + '</li>'
+            document.getElementById("nav_bar").innerHTML = nav;
+        }
+        
+        if (type != "MW") {
+            var area = document.getElementById("area").value;
+            criteria = document.getElementById("criteria").value;
+            var x = " ";
+            if (criteria == "Sub system wise") {
+                x = document.getElementById("sub_s").value;
+            }
+            var p_range = document.getElementById("p_range").value;
+            if (criteria == "System wise" || criteria == "Sub system wise") {
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'get_data_fa' %}",
+                    data: {
+                        type: type,
+                        area: area,
+                        criteria: criteria,
+                        p_range: p_range,
+                        sub_sys: x,
+                        csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+                    },
+                    success: function (response) {
+
+                        if (response[0] == "There are no results for this query") {
+                            alert("No data found")
+                        }
+                        else {
+                            //document.getElementById('graph').style.display = 'block'
+                            //var a = document.getElementById("chart");
+                            //a.style.display = "none";
+                            //alert("Graph updated sccessfully");
+                            var table3 = '';
+                            table3 = '<thead><tr><th>FAILURE TYPE'
+
+
+                            table3 += '</th><th>NUMBER OF FAILURE</th><th>CUMULATIVE</th><th>CUMULATIVE %</th></tr></thead><tbody>';
+                            var i = 0;
+                            for (i = 0; i < response[0].length; i++) {
+                                table3 += '<tr>' + '<td>' + response[0][i] + '</td>' + '<td>' + response[1][i] + '</td>' + '<td>' + response[3][i] + '</td>' + '<td>' + response[2][i] + '</td>' + '</tr>';
+                            }
+                            table3 += '<tr><td><b>Total failure:</b></td><td colspan="3"><center>' + response[3][i - 1] + '</center></td></tr>'
+
+                            table3 += '</tbody>'
+                            //var b = document.getElementById("table2");
+                            //b.style.display = "none";
+                            document.getElementById("table3").innerHTML = table3;
+                            if (type == 'C') {
+                                type = "Critical machines"
+                            }
+                            if (type == 'G') {
+                                type = "General machines"
+                            }
+                            /*if (criteria == "System wise") {
+                                var title = type + "-" + area + "-" + criteria + "-" + p_range
+                                document.getElementById("title").innerHTML = title;
+                            }
+                            else {
+                                var title = type + "-" + area + "-" + criteria;
+                                document.getElementById("title").innerHTML = title;
+                            }*/
+
+
+                            var trace1 = {
+                                x: response[0],
+                                y: response[1],
+                                type: 'bar',
+
+                                marker: {
+                                    color: 'rgb(34,163,192)'
+                                },
+                                name: 'No of system failures'
+                            };
+                            var trace2 = {
+                                x: response[0],
+                                y: response[2],
+                                type: 'line',
+                                yaxis: 'y2',
+                                marker: {
+                                    color: 'red',
+                                    markers: true
+                                },
+                                name: 'Cumulative %'
+                            };
+
+                            var data = [trace1, trace2];
+                            var x = "";
+                            if (criteria == "System wise") {
+                                x = criteria + ' failure pareto chart: Financial ' + p_range;
+                            }
+                            else {
+                                x = criteria + ' failure pareto chart';
+                            }
+
+                            var layout = {
+                                title: '<b>' + x + '</b>',
+                                font: {
+                                    family: 'Raleway, sans-serif'
+                                },
+                                showlegend: true,
+                                xaxis: {
+                                    tickangle: 45,
+                                    title: ''
+                                },
+                                yaxis: {
+                                    zeroline: true,
+                                    gridwidth: 0,
+                                    title: '<b>No.of failures</b>'
+                                },
+
+                                yaxis2: {
+                                    title: '<b>Cumulative</b> %',
+                                    overlaying: 'y',
+                                    side: 'right'
+                                },
+                                margin: {
+                                    t: 30, b: 110, l: 200, r: 20
+                                }
+
+                            };
+
+                            Plotly.newPlot('graph', data, layout);
+                            if (criteria == 'System wise') {
+                                var chart = {
+                                    type: 'pie',
+                                    options3d: {
+                                        enabled: true,
+                                        alpha: 45,
+                                        beta: 0
+                                    },
+                                    margin: [0, 0, 0, 0],
+                                    spacingTop: 0,
+                                    spacingBottom: 100,
+                                    spacingLeft: 0,
+                                    spacingRight: 0,
+                                    renderTo: 'graph2'
+                                };
+                                var title = {
+                                    text: '<b>' + 'System wise-' + type + "-" + area + "-" + p_range + '</b>'
+                                };
+                                var tooltip = {
+                                    pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                                };
+                                var plotOptions = {
+                                    pie: {
+                                        allowPointSelect: true,
+                                        cursor: 'pointer',
+                                        depth: 35,
+                                        size: 300,
+                                        edgeWidth: 1,
+                                        edgeColor: "black",
+                                        dataLabels: {
+                                            enabled: true,
+                                            format: '{point.name}'
+                                        },
+                                        showInLegend: true,
+
+                                    },
+
+                                };
+                                var series = [{
+                                    type: 'pie',
+                                    name: 'Failure percent',
+                                    data: response[4]
+
+                                }];
+                                //alert(response[4][0])
+                                var legend = {
+                                    layout: 'vertical',
+                                    align: 'right',
+                                    verticalAlign: 'bottom',
+                                    itemMarginTop: 0,
+                                    itemMarginBottom: 0
+                                };
+                                var json = {};
+                                json.chart = chart;
+                                json.title = title;
+                                json.tooltip = tooltip;
+                                json.plotOptions = plotOptions;
+                                json.series = series;
+                                json.legend = legend;
+                                var c = new Highcharts.Chart(json);
+                                $('#graph2').highcharts(c);
+
+                            }
+                        }
+                    }
+                });
+            }
+            else {
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'get_data_fa' %}",
+                    data: {
+                        type: type,
+                        area: area,
+                        criteria: criteria,
+                        p_range: p_range,
+                        sub_sys: x,
+                        csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+                    },
+                    success: function (response) {
+
+                        if (response[0] == "There are no results for this query") {
+                            alert("No data found")
+                        }
+                        else {
+                            //document.getElementById("graph").style.display = 'block'
+                            //var a = document.getElementById("chart");
+                            //a.style.display = "none";
+                            //alert("Graph updated sccessfully");
+                            if (type == 'C') {
+                                type = "Critical machines"
+                            }
+                            if (type == 'G') {
+                                type = "General machines"
+                            }
+                            //var title = type + "-" + area + "-" + criteria + "-" + p_range
+                            //document.getElementById("title").innerHTML = title;
+
+
+                            if (response.length == 7) {
+                                var table3 = '';
+                                table3 = '<thead><tr><th>MONTH'
+                                table3 += '</th><th>TOTAL MACHINES</th><th>GENERAL MACHINES</th><th>CRITICAL MACHINES</th></tr></thead><tbody>';
+                                var i = 0;
+                                for (i = 0; i < response[0].length; i++) {
+                                    table3 += '<tr>' + '<td>' + response[0][i] + '</td>' + '<td>' + response[4][i] + '</td>' + '<td>' + response[5][i] + '</td>' + '<td>' + response[6][i] + '</td>' + '</tr>';
+                                }
+                                //table3 += '<tr><td><b>Total failure:</b></td><td colspan="3"><center>' + response[3][i - 1] + '</center></td></tr>'
+
+                                table3 += '</tbody>'
+                                //var b = document.getElementById("table2");
+                                //b.style.display = "none";
+                                document.getElementById("table3").innerHTML = table3;
+
+                                    var chart = {
+                                        type: 'column',
+                                        marginTop: 80,
+                                        marginRight: 40,
+                                        options3d: {
+                                            enabled: true,
+                                            alpha: 25,
+                                            beta: 0,
+                                            viewDistance: 80,
+                                            depth: 40
+                                        },
+                                        renderTo:'graph'
+                                    };
+                                    var title = {
+                                        text: 'Failure Analysis month-wise:Financial ' + p_range
+                                    };
+                                    //var mo6 = JSON.parse("{{mo4|escapejs}}"); 
+
+                                    var xAxis = {
+                                        categories: response[0],
+                                        labels: {
+                                            useHTML: true,//Set to true
+                                            style: {
+                                                width: '50px',
+                                                whiteSpace: 'normal'//set to normal
+                                            },
+                                            step: 1,
+                                            rotation: 90
+
+                                        },
+                                        title: {
+                                            text: 'Months'
+                                        }
+                                    };
+                                    var yAxis = {
+                                        allowDecimals: false,
+                                        min: 0,
+                                        title: {
+                                            text: 'Percentage of Machines'
+                                        }
+                                    };
+
+                                    var tooltip = {
+
+                                        headerFormat: '<b>{point.key}</b><br>',
+                                        pointFormat: '<span style = "color:{series.color}">\u25CF</span> {series.name}:{point.val}'
+
+
+                                    };
+
+                                    var plotOptions = {
+                                        column: {
+                                            grouping: 'normal',
+                                            depth: 40
+                                        }
+                                    };
+
+                                    //var t6 = JSON.parse("{{t4|escapejs}}");
+                                    //var n6 = JSON.parse("{{n4|escapejs}}");
+                                    //var p6 = JSON.parse("{{p4|escapejs}}");
+
+                                    var series = [{
+                                        name: 'Total',
+                                        data: response[1],
+                                        color: 'yellow'
+
+                                    }, {
+                                        name: 'General',
+                                        data: response[2],
+                                        color: '#ADD8E6'
+                                    },
+                                    {
+                                        name: 'Critical',
+                                        data: response[3],
+                                        color: 'green'
+                                    }
+                                    ];
+
+                                    var json = {};
+                                    json.chart = chart;
+                                    json.title = title;
+                                    json.xAxis = xAxis;
+                                    json.yAxis = yAxis;
+                                    json.tooltip = tooltip;
+                                    json.plotOptions = plotOptions;
+                                    json.series = series;
+                                    var c = new Highcharts.Chart(json);
+                                    $('#graph').highcharts(c);
+
+                                
+
+                            }
+
+                            else if (response.length == 3) {
+                                var table3 = '';
+                                table3 = '<thead><tr><th>MONTH'
+
+                                if (type == 'C') {
+                                    table3 += '</th><th>CRITICAL MACHINES</th></tr></thead><tbody>';
+                                }
+                                else {
+                                    table3 += '</th><th>GENERAL MACHINES</th></tr></thead><tbody>';
+                                }
+                                var i = 0;
+                                for (i = 0; i < response[0].length; i++) {
+                                    table3 += '<tr>' + '<td>' + response[0][i] + '</td>' + '<td>' + response[2][i] + '</td>' + '</tr>';
+                                }
+                                //table3 += '<tr><td><b>Total failure:</b></td><td colspan="3"><center>' + response[3][i - 1] + '</center></td></tr>'
+
+                                table3 += '</tbody>'
+                                //var b = document.getElementById("table2");
+                                //b.style.display = "none";
+                                document.getElementById("table3").innerHTML = table3;
+                                    var chart = {
+                                        type: 'column',
+                                        marginTop: 80,
+                                        marginRight: 40,
+                                        options3d: {
+                                            enabled: true,
+                                            alpha: 15,
+                                            beta: 15,
+                                            viewDistance: 25,
+                                            depth: 40
+                                        },
+                                        renderTo:"graph"
+                                    };
+                                    var title = {
+                                        text: 'Failure Analysis month-wise Financial ' + p_range
+                                    };
+                                    //var mo5 = JSON.parse("{{mo4|escapejs}}"); 
+
+                                    var xAxis = {
+                                        categories: response[0],
+                                        labels: {
+                                            useHTML: true,//Set to true
+                                            style: {
+                                                width: '50px',
+                                                whiteSpace: 'normal'//set to normal
+                                            },
+                                            step: 1,
+                                            rotation: 45
+                                        },
+                                        title: {
+                                            text: 'Months'
+                                        }
+                                    };
+                                    var yAxis = {
+                                        allowDecimals: false,
+                                        min: 0,
+                                        title: {
+                                            text: 'Percentage of Machines'
+                                        }
+                                    };
+
+                                    var tooltip = {
+
+                                        headerFormat: '<b>{point.key}</b><br>',
+                                        pointFormat: '<span style = "color:{series.color}">\u25CF</span> {series.name}:{point.val}'
+
+
+                                    };
+
+                                    var plotOptions = {
+                                        column: {
+                                            grouping: 'normal',
+                                            depth: 40
+                                        }
+                                    };
+                                    //var t5 = JSON.parse("{{t4|escapejs}}");
+
+                                    var series = [{
+                                        name: type,
+                                        data: response[1],
+                                        color: '#DB7093'
+
+                                    }
+                                    ];
+
+                                    var json = {};
+                                    json.chart = chart;
+                                    json.title = title;
+                                    json.xAxis = xAxis;
+                                    json.yAxis = yAxis;
+                                    json.tooltip = tooltip;
+                                    json.plotOptions = plotOptions;
+                                    json.series = series;
+                                    var c = new Highcharts.Chart(json);
+                                    $('#graph').highcharts(c);
+
+                                
+                            }
+
+                        }
+                    }
+
+
+                });
+            }
+        }
+        else {
+
+            //alert(mac_no)
+            //document.getElementById("MWNO").click();
+            document.getElementById("MWNO").textContent = mac_no;
+            $.ajax({
+                type: "GET",
+                url: "{% url 'get_data_fa' %}",
+                data: {
+                    type: type,
+                    mac_no: mac_no,
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+                },
+                success: function (response) {
+
+                    if (response[0] == "There are no results for this query") {
+                        alert("No data found")
+                    }
+                    else {
+                        //document.getElementById('graph').style.display = 'block'
+                        //var a = document.getElementById("chart");
+                        //a.style.display = "none";
+                        //alert("Graph updated sccessfully");
+                        var table3 = '';
+                        table3 = '<thead><tr><th>FAILURE TYPE'
+
+
+                        table3 += '</th><th>NUMBER OF FAILURE</th><th>CUMULATIVE</th><th>CUMULATIVE %</th></tr></thead><tbody>';
+                        var i = 0;
+                        for (i = 0; i < response[0].length; i++) {
+                            table3 += '<tr>' + '<td>' + response[0][i] + '</td>' + '<td>' + response[1][i] + '</td>' + '<td>' + response[3][i] + '</td>' + '<td>' + response[2][i] + '</td>' + '</tr>';
+                        }
+                        table3 += '<tr><td><b>Total failure:</b></td><td colspan="3"><center>' + response[3][i - 1] + '</center></td></tr>'
+
+                        table3 += '</tbody>'
+                        //var b = document.getElementById("table2");
+                        //b.style.display = "none";
+                        document.getElementById("table3").innerHTML = table3;
+                        //var title = "System wise failure for machine no. " + mac_no;
+                        //document.getElementById("title").innerHTML = title;
+
+                        var trace1 = {
+                            x: response[0],
+                            y: response[1],
+                            type: 'bar',
+
+                            marker: {
+                                color: 'rgb(34,163,192)'
+                            },
+                            name: 'No of system failures'
+                        };
+                        var trace2 = {
+                            x: response[0],
+                            y: response[2],
+                            type: 'line',
+                            yaxis: 'y2',
+                            marker: {
+                                color: 'red',
+                                markers: true
+                            },
+                            name: 'Cumulative %'
+                        };
+
+                        var data = [trace1, trace2];
+                        var x = "System wise failures of machine no " + mac_no;
+
+                        var layout = {
+                            title: '<b>' + x + '</b>',
+                            font: {
+                                family: 'Raleway, sans-serif'
+                            },
+                            showlegend: true,
+                            xaxis: {
+                                tickangle: 45,
+                                title: ''
+                            },
+                            yaxis: {
+                                zeroline: true,
+                                gridwidth: 0,
+                                title: '<b>No.of failures</b>'
+                            },
+
+                            yaxis2: {
+                                title: '<b>Cumulative</b> %',
+                                overlaying: 'y',
+                                side: 'right'
+                            },
+                            margin: {
+                                t: 30, b: 110, l: 200, r: 20
+                            }
+
+                        };
+
+                        Plotly.newPlot('graph', data, layout);
+
+                        var chart = {
+                            type: 'pie',
+                            options3d: {
+                                enabled: true,
+                                alpha: 45,
+                                beta: 0
+                            },
+                            margin: [0, 0, 0, 0],
+                            spacingTop: 0,
+                            spacingBottom: 100,
+                            spacingLeft: 0,
+                            spacingRight: 0,
+                            renderTo: 'graph2'
+                        };
+                        var title = {
+                            text: '<b>' + "System wise failure for machine no. " + mac_no + '</b>'//'System wise'+ ' failure pie chart: Machine no. ' + mac_no +'</b>'   
+                        };
+                        var tooltip = {
+                            pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                        };
+                        var plotOptions = {
+                            pie: {
+                                allowPointSelect: true,
+                                cursor: 'pointer',
+                                depth: 35,
+                                size: 300,
+
+                                dataLabels: {
+                                    enabled: true,
+                                    format: '{point.name}'
+                                },
+                                showInLegend: true,
+                                edgeWidth: 1,
+                                edgeColor: "black"
+
+                            },
+
+                        };
+                        var series = [{
+                            type: 'pie',
+                            name: 'Failure percent',
+                            data: response[4]
+
+                        }];
+                        //alert(response[4][0])
+                        var legend = {
+                            layout: 'vertical',
+                            align: 'right',
+                            verticalAlign: 'bottom',
+                            itemMarginTop: 0,
+                            itemMarginBottom: 0
+                        };
+                        var json = {};
+                        json.chart = chart;
+                        json.title = title;
+                        json.tooltip = tooltip;
+                        json.plotOptions = plotOptions;
+                        json.series = series;
+                        json.legend = legend;
+                        var c = new Highcharts.Chart(json);
+                        $('#graph2').highcharts(c);
+
+                    }
+                }
+            });
+        }
+        var element = document.getElementById("graph");
+        element.classList.add("active");
+        var element = document.getElementById("graph");
+        element.classList.add("show");
+        document.getElementById("graph2").classList.remove("active")
+        document.getElementById("graph2").classList.remove("show")
+
+
+    }
+</script>
+
+</html>
+
+{% endblock %}
